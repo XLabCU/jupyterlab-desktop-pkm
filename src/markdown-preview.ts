@@ -91,15 +91,25 @@ export const markdownPreviewPlugin: JupyterFrontEndPlugin<void> = {
       const statusSpan = widget.node.querySelector('span') as HTMLSpanElement;
       
       const getCurrentFileMode = (): 'edit' | 'preview' | 'none' => {
-        // Check if current focused widget is a markdown file
-        const editorWidget = editorTracker.currentWidget;
-        const previewWidget = markdownTracker.currentWidget;
+        // Get the currently active widget from the shell
+        const current = app.shell.currentWidget;
         
-        if (editorWidget && editorWidget.context.path.endsWith('.md')) {
-          return 'edit';
-        } else if (previewWidget && previewWidget.context.path.endsWith('.md')) {
-          return 'preview';
+        // Check if it's a markdown editor
+        if (current && editorTracker.has(current)) {
+          const editorWidget = current as any;
+          if (editorWidget?.context?.path?.endsWith('.md')) {
+            return 'edit';
+          }
         }
+        
+        // Check if it's a markdown preview
+        if (current && markdownTracker.has(current)) {
+          const previewWidget = current as any;
+          if (previewWidget?.context?.path?.endsWith('.md')) {
+            return 'preview';
+          }
+        }
+        
         return 'none';
       };
 
@@ -144,19 +154,20 @@ export const markdownPreviewPlugin: JupyterFrontEndPlugin<void> = {
           return;
         }
         
-        // Determine which widget and path to work with
-        let currentWidget = null;
+        // Get the currently active widget and path
+        const current = app.shell.currentWidget;
+        let currentWidget = current;
         let currentPath = '';
         
-        if (currentMode === 'edit') {
-          currentWidget = editorTracker.currentWidget;
-          if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-            currentPath = currentWidget.context.path;
+        if (currentMode === 'edit' && current && editorTracker.has(current)) {
+          const editorWidget = current as any;
+          if (editorWidget?.context?.path?.endsWith('.md')) {
+            currentPath = editorWidget.context.path;
           }
-        } else if (currentMode === 'preview') {
-          currentWidget = markdownTracker.currentWidget;
-          if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-            currentPath = currentWidget.context.path;
+        } else if (currentMode === 'preview' && current && markdownTracker.has(current)) {
+          const previewWidget = current as any;
+          if (previewWidget?.context?.path?.endsWith('.md')) {
+            currentPath = previewWidget.context.path;
           }
         }
         
@@ -210,6 +221,11 @@ export const markdownPreviewPlugin: JupyterFrontEndPlugin<void> = {
       editorTracker.currentChanged.connect(updateButton);
       markdownTracker.currentChanged.connect(updateButton);
       
+      // Also listen to shell focus changes for more accurate tracking
+      if (app.shell.currentChanged) {
+        app.shell.currentChanged.connect(updateButton);
+      }
+      
       // Initial button update
       updateButton();
       return widget;
@@ -221,14 +237,25 @@ export const markdownPreviewPlugin: JupyterFrontEndPlugin<void> = {
       execute: async () => {
         // Use the same logic as the button click
         const getCurrentFileMode = (): 'edit' | 'preview' | 'none' => {
-          const editorWidget = editorTracker.currentWidget;
-          const previewWidget = markdownTracker.currentWidget;
+          // Get the currently active widget from the shell
+          const current = app.shell.currentWidget;
           
-          if (editorWidget && editorWidget.context.path.endsWith('.md')) {
-            return 'edit';
-          } else if (previewWidget && previewWidget.context.path.endsWith('.md')) {
-            return 'preview';
+          // Check if it's a markdown editor
+          if (current && editorTracker.has(current)) {
+            const editorWidget = current as any;
+            if (editorWidget?.context?.path?.endsWith('.md')) {
+              return 'edit';
+            }
           }
+          
+          // Check if it's a markdown preview
+          if (current && markdownTracker.has(current)) {
+            const previewWidget = current as any;
+            if (previewWidget?.context?.path?.endsWith('.md')) {
+              return 'preview';
+            }
+          }
+          
           return 'none';
         };
         
@@ -243,19 +270,20 @@ export const markdownPreviewPlugin: JupyterFrontEndPlugin<void> = {
           return;
         }
         
-        // Determine which widget and path to work with
-        let currentWidget = null;
+        // Get the currently active widget and path
+        const current = app.shell.currentWidget;
+        let currentWidget = current;
         let currentPath = '';
         
-        if (currentMode === 'edit') {
-          currentWidget = editorTracker.currentWidget;
-          if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-            currentPath = currentWidget.context.path;
+        if (currentMode === 'edit' && current && editorTracker.has(current)) {
+          const editorWidget = current as any;
+          if (editorWidget?.context?.path?.endsWith('.md')) {
+            currentPath = editorWidget.context.path;
           }
-        } else if (currentMode === 'preview') {
-          currentWidget = markdownTracker.currentWidget;
-          if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-            currentPath = currentWidget.context.path;
+        } else if (currentMode === 'preview' && current && markdownTracker.has(current)) {
+          const previewWidget = current as any;
+          if (previewWidget?.context?.path?.endsWith('.md')) {
+            currentPath = previewWidget.context.path;
           }
         }
         
@@ -379,12 +407,17 @@ Start building your knowledge graph!
 
     // Show/hide toggle widget based on current file
     const updateToggleVisibility = () => {
-      const currentEditorWidget = editorTracker.currentWidget;
-      const currentViewerWidget = markdownTracker.currentWidget;
+      const current = app.shell.currentWidget;
+      let hasMarkdownFile = false;
       
-      // Show if we have a markdown file open (either editor or viewer)
-      const hasMarkdownFile = (currentEditorWidget && currentEditorWidget.context.path.endsWith('.md')) ||
-                             (currentViewerWidget && currentViewerWidget.context.path.endsWith('.md'));
+      // Check if current widget is a markdown file
+      if (current && editorTracker.has(current)) {
+        const editorWidget = current as any;
+        hasMarkdownFile = editorWidget?.context?.path?.endsWith('.md') || false;
+      } else if (current && markdownTracker.has(current)) {
+        const previewWidget = current as any;
+        hasMarkdownFile = previewWidget?.context?.path?.endsWith('.md') || false;
+      }
       
       if (hasMarkdownFile) {
         showToggleWidget();
@@ -396,6 +429,11 @@ Start building your knowledge graph!
     // Track current widget changes
     editorTracker.currentChanged.connect(updateToggleVisibility);
     markdownTracker.currentChanged.connect(updateToggleVisibility);
+    
+    // Track shell focus changes for better accuracy
+    if (app.shell.currentChanged) {
+      app.shell.currentChanged.connect(updateToggleVisibility);
+    }
     
     // Track when widgets are added/removed
     editorTracker.widgetAdded.connect(updateToggleVisibility);

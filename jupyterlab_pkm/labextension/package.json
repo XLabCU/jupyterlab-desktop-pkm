@@ -114,7 +114,7 @@
     "outputDir": "jupyterlab_pkm/labextension",
     "schemaDir": "schema",
     "_build": {
-      "load": "static/remoteEntry.dd28ae785c3e6075d5a3.js",
+      "load": "static/remoteEntry.7729ab73a1455dc43a64.js",
       "extension": "./extension",
       "style": "./style"
     }

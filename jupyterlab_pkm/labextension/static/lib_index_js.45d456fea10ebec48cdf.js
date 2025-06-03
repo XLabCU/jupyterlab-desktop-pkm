@@ -1668,6 +1668,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _block_embedding__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./block-embedding */ "./lib/block-embedding.js");
 /* harmony import */ var _notebook_embed__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./notebook-embed */ "./lib/notebook-embed.js");
 /* harmony import */ var _code_copy__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./code-copy */ "./lib/code-copy.js");
+/* harmony import */ var _welcome__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./welcome */ "./lib/welcome.js");
 
 
 
@@ -1680,7 +1681,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-// import { welcomePlugin } from './welcome'; // Causes JupyterLab to not load
+ // Still causes issues
 /**
  * The main extension that combines all PKM features
  */
@@ -1711,7 +1712,7 @@ const extension = {
  */
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ([
     extension,
-    // welcomePlugin, // Causes JupyterLab to not load
+    _welcome__WEBPACK_IMPORTED_MODULE_11__.welcomePlugin,
     _markdown_preview__WEBPACK_IMPORTED_MODULE_4__.markdownPreviewPlugin,
     _wikilinks__WEBPACK_IMPORTED_MODULE_5__.wikilinkPlugin,
     _search__WEBPACK_IMPORTED_MODULE_6__.searchPlugin,
@@ -1719,10 +1720,6 @@ const extension = {
     _block_embedding__WEBPACK_IMPORTED_MODULE_8__.blockEmbeddingPlugin,
     _notebook_embed__WEBPACK_IMPORTED_MODULE_9__.notebookEmbedPlugin,
     _code_copy__WEBPACK_IMPORTED_MODULE_10__.codeCopyPlugin
-    // All working plugins added!
-    // searchPlugin,
-    // backlinksPlugin,
-    // notebookEmbedPlugin
 ]);
 
 
@@ -1825,14 +1822,22 @@ const markdownPreviewPlugin = {
             const button = widget.node.querySelector('#pkm-mode-btn');
             const statusSpan = widget.node.querySelector('span');
             const getCurrentFileMode = () => {
-                // Check if current focused widget is a markdown file
-                const editorWidget = editorTracker.currentWidget;
-                const previewWidget = markdownTracker.currentWidget;
-                if (editorWidget && editorWidget.context.path.endsWith('.md')) {
-                    return 'edit';
+                var _a, _b, _c, _d;
+                // Get the currently active widget from the shell
+                const current = app.shell.currentWidget;
+                // Check if it's a markdown editor
+                if (current && editorTracker.has(current)) {
+                    const editorWidget = current;
+                    if ((_b = (_a = editorWidget === null || editorWidget === void 0 ? void 0 : editorWidget.context) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b.endsWith('.md')) {
+                        return 'edit';
+                    }
                 }
-                else if (previewWidget && previewWidget.context.path.endsWith('.md')) {
-                    return 'preview';
+                // Check if it's a markdown preview
+                if (current && markdownTracker.has(current)) {
+                    const previewWidget = current;
+                    if ((_d = (_c = previewWidget === null || previewWidget === void 0 ? void 0 : previewWidget.context) === null || _c === void 0 ? void 0 : _c.path) === null || _d === void 0 ? void 0 : _d.endsWith('.md')) {
+                        return 'preview';
+                    }
                 }
                 return 'none';
             };
@@ -1868,24 +1873,26 @@ const markdownPreviewPlugin = {
                 button.style.opacity = '1';
             });
             button.addEventListener('click', async () => {
+                var _a, _b, _c, _d;
                 const currentMode = getCurrentFileMode();
                 if (currentMode === 'none') {
                     // No markdown file is focused, do nothing
                     return;
                 }
-                // Determine which widget and path to work with
-                let currentWidget = null;
+                // Get the currently active widget and path
+                const current = app.shell.currentWidget;
+                let currentWidget = current;
                 let currentPath = '';
-                if (currentMode === 'edit') {
-                    currentWidget = editorTracker.currentWidget;
-                    if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-                        currentPath = currentWidget.context.path;
+                if (currentMode === 'edit' && current && editorTracker.has(current)) {
+                    const editorWidget = current;
+                    if ((_b = (_a = editorWidget === null || editorWidget === void 0 ? void 0 : editorWidget.context) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b.endsWith('.md')) {
+                        currentPath = editorWidget.context.path;
                     }
                 }
-                else if (currentMode === 'preview') {
-                    currentWidget = markdownTracker.currentWidget;
-                    if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-                        currentPath = currentWidget.context.path;
+                else if (currentMode === 'preview' && current && markdownTracker.has(current)) {
+                    const previewWidget = current;
+                    if ((_d = (_c = previewWidget === null || previewWidget === void 0 ? void 0 : previewWidget.context) === null || _c === void 0 ? void 0 : _c.path) === null || _d === void 0 ? void 0 : _d.endsWith('.md')) {
+                        currentPath = previewWidget.context.path;
                     }
                 }
                 if (!currentWidget || !currentPath) {
@@ -1927,6 +1934,10 @@ const markdownPreviewPlugin = {
             // Listen for focus changes to update button state
             editorTracker.currentChanged.connect(updateButton);
             markdownTracker.currentChanged.connect(updateButton);
+            // Also listen to shell focus changes for more accurate tracking
+            if (app.shell.currentChanged) {
+                app.shell.currentChanged.connect(updateButton);
+            }
             // Initial button update
             updateButton();
             return widget;
@@ -1935,15 +1946,25 @@ const markdownPreviewPlugin = {
         app.commands.addCommand(COMMAND_TOGGLE_MODE, {
             label: 'PKM: Toggle Current Markdown File View',
             execute: async () => {
+                var _a, _b, _c, _d;
                 // Use the same logic as the button click
                 const getCurrentFileMode = () => {
-                    const editorWidget = editorTracker.currentWidget;
-                    const previewWidget = markdownTracker.currentWidget;
-                    if (editorWidget && editorWidget.context.path.endsWith('.md')) {
-                        return 'edit';
+                    var _a, _b, _c, _d;
+                    // Get the currently active widget from the shell
+                    const current = app.shell.currentWidget;
+                    // Check if it's a markdown editor
+                    if (current && editorTracker.has(current)) {
+                        const editorWidget = current;
+                        if ((_b = (_a = editorWidget === null || editorWidget === void 0 ? void 0 : editorWidget.context) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b.endsWith('.md')) {
+                            return 'edit';
+                        }
                     }
-                    else if (previewWidget && previewWidget.context.path.endsWith('.md')) {
-                        return 'preview';
+                    // Check if it's a markdown preview
+                    if (current && markdownTracker.has(current)) {
+                        const previewWidget = current;
+                        if ((_d = (_c = previewWidget === null || previewWidget === void 0 ? void 0 : previewWidget.context) === null || _c === void 0 ? void 0 : _c.path) === null || _d === void 0 ? void 0 : _d.endsWith('.md')) {
+                            return 'preview';
+                        }
                     }
                     return 'none';
                 };
@@ -1956,19 +1977,20 @@ const markdownPreviewPlugin = {
                     });
                     return;
                 }
-                // Determine which widget and path to work with
-                let currentWidget = null;
+                // Get the currently active widget and path
+                const current = app.shell.currentWidget;
+                let currentWidget = current;
                 let currentPath = '';
-                if (currentMode === 'edit') {
-                    currentWidget = editorTracker.currentWidget;
-                    if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-                        currentPath = currentWidget.context.path;
+                if (currentMode === 'edit' && current && editorTracker.has(current)) {
+                    const editorWidget = current;
+                    if ((_b = (_a = editorWidget === null || editorWidget === void 0 ? void 0 : editorWidget.context) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b.endsWith('.md')) {
+                        currentPath = editorWidget.context.path;
                     }
                 }
-                else if (currentMode === 'preview') {
-                    currentWidget = markdownTracker.currentWidget;
-                    if (currentWidget && currentWidget.context.path.endsWith('.md')) {
-                        currentPath = currentWidget.context.path;
+                else if (currentMode === 'preview' && current && markdownTracker.has(current)) {
+                    const previewWidget = current;
+                    if ((_d = (_c = previewWidget === null || previewWidget === void 0 ? void 0 : previewWidget.context) === null || _c === void 0 ? void 0 : _c.path) === null || _d === void 0 ? void 0 : _d.endsWith('.md')) {
+                        currentPath = previewWidget.context.path;
                     }
                 }
                 if (!currentWidget || !currentPath) {
@@ -2079,11 +2101,18 @@ Start building your knowledge graph!
         };
         // Show/hide toggle widget based on current file
         const updateToggleVisibility = () => {
-            const currentEditorWidget = editorTracker.currentWidget;
-            const currentViewerWidget = markdownTracker.currentWidget;
-            // Show if we have a markdown file open (either editor or viewer)
-            const hasMarkdownFile = (currentEditorWidget && currentEditorWidget.context.path.endsWith('.md')) ||
-                (currentViewerWidget && currentViewerWidget.context.path.endsWith('.md'));
+            var _a, _b, _c, _d;
+            const current = app.shell.currentWidget;
+            let hasMarkdownFile = false;
+            // Check if current widget is a markdown file
+            if (current && editorTracker.has(current)) {
+                const editorWidget = current;
+                hasMarkdownFile = ((_b = (_a = editorWidget === null || editorWidget === void 0 ? void 0 : editorWidget.context) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b.endsWith('.md')) || false;
+            }
+            else if (current && markdownTracker.has(current)) {
+                const previewWidget = current;
+                hasMarkdownFile = ((_d = (_c = previewWidget === null || previewWidget === void 0 ? void 0 : previewWidget.context) === null || _c === void 0 ? void 0 : _c.path) === null || _d === void 0 ? void 0 : _d.endsWith('.md')) || false;
+            }
             if (hasMarkdownFile) {
                 showToggleWidget();
             }
@@ -2094,6 +2123,10 @@ Start building your knowledge graph!
         // Track current widget changes
         editorTracker.currentChanged.connect(updateToggleVisibility);
         markdownTracker.currentChanged.connect(updateToggleVisibility);
+        // Track shell focus changes for better accuracy
+        if (app.shell.currentChanged) {
+            app.shell.currentChanged.connect(updateToggleVisibility);
+        }
         // Track when widgets are added/removed
         editorTracker.widgetAdded.connect(updateToggleVisibility);
         markdownTracker.widgetAdded.connect(updateToggleVisibility);
@@ -2701,6 +2734,239 @@ class PKMState {
 }
 // Create a singleton instance
 const pkmState = new PKMState();
+
+
+/***/ }),
+
+/***/ "./lib/welcome.js":
+/*!************************!*\
+  !*** ./lib/welcome.js ***!
+  \************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   welcomePlugin: () => (/* binding */ welcomePlugin)
+/* harmony export */ });
+/* harmony import */ var _jupyterlab_apputils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @jupyterlab/apputils */ "webpack/sharing/consume/default/@jupyterlab/apputils");
+/* harmony import */ var _jupyterlab_apputils__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_jupyterlab_apputils__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _jupyterlab_filebrowser__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @jupyterlab/filebrowser */ "webpack/sharing/consume/default/@jupyterlab/filebrowser");
+/* harmony import */ var _jupyterlab_filebrowser__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_jupyterlab_filebrowser__WEBPACK_IMPORTED_MODULE_1__);
+
+
+/**
+ * The command IDs used by the welcome plugin
+ */
+var CommandIDs;
+(function (CommandIDs) {
+    CommandIDs.showWelcome = 'pkm:show-welcome';
+})(CommandIDs || (CommandIDs = {}));
+/**
+ * Welcome plugin that creates documentation file
+ */
+const welcomePlugin = {
+    id: '@jupyterlab/pkm-extension:welcome',
+    description: 'Creates PKM documentation and adds help command',
+    autoStart: true,
+    requires: [_jupyterlab_apputils__WEBPACK_IMPORTED_MODULE_0__.ICommandPalette, _jupyterlab_filebrowser__WEBPACK_IMPORTED_MODULE_1__.IFileBrowserFactory],
+    activate: async (app, palette, factory) => {
+        console.log('PKM Welcome plugin activated');
+        // Create documentation file on activation
+        await createPKMDocumentation(app);
+        // Add command to open documentation
+        app.commands.addCommand(CommandIDs.showWelcome, {
+            label: 'PKM: Open Documentation',
+            execute: async () => {
+                try {
+                    await app.commands.execute('docmanager:open', {
+                        path: 'PKM-Extension-Guide.md'
+                    });
+                }
+                catch (error) {
+                    console.warn('Could not open PKM documentation:', error);
+                    alert('PKM Documentation should be available as "PKM-Extension-Guide.md" in your file browser');
+                }
+            }
+        });
+        palette.addItem({
+            command: CommandIDs.showWelcome,
+            category: 'PKM'
+        });
+    }
+};
+/**
+ * Create PKM documentation file
+ */
+async function createPKMDocumentation(app) {
+    const docContent = `# Personal Knowledge Management (PKM) Extension Guide
+
+🎉 **The PKM Extension is now active!** This extension transforms JupyterLab into a powerful note-taking and knowledge management system.
+
+## 🚀 Quick Start
+
+1. Create a new markdown file (e.g., \`start.md\`)
+2. Start linking notes with wikilinks: \`[[Note Name]]\`
+3. Use keyboard shortcuts for quick navigation
+4. Embed notebooks and code blocks in your notes
+
+## ✨ Key Features
+
+### 📝 Wikilinks
+- \`[[Note Name]]\` - Create links between notes
+- \`[[note|display text]]\` - Link with custom display text  
+- **Shift + Click** to follow links in editing mode
+- **Ctrl/Cmd + Click** to follow links in preview mode
+- Auto-completion for existing notes when typing \`[[\`
+
+### 🔍 Search & Navigation
+- **Alt + F** - Global search across all files
+- **Alt + B** - Show backlinks (what links to current note)
+- Full-text search across markdown files and notebooks
+- Quick navigation between connected notes
+
+### 📊 Content Embedding
+- \`![[notebook.ipynb#cell-id]]\` - Embed specific cells from ipynb files 
+- \`![[file.md#heading]]\` - Embed sections from markdown files
+- Live preview of embedded content
+
+In ipynb files, you can use the Cell Overview Tool to quickly see the cell id for embedding. Use \`PKM: Show Notebook Cell Overview\` from the command palette to see all cells with their IDs, types, and previews.
+
+### 📋 Code Features
+- **Copy code blocks** from markdown with click-to-copy buttons
+- Syntax highlighting in embedded code
+- **Alt + M** - Toggle markdown preview mode
+
+### 🔗 Backlinks Panel
+- See all files that link to the current note
+- Automatic backlink detection
+- Navigate between related notes easily
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| **Alt + F** | Open global search |
+| **Alt + B** | Show backlinks for current file |
+| **Alt + M** | Toggle markdown preview |
+| **Shift + Click** | Follow wikilink in editor |
+| **Click** | Follow wikilink in preview/create new file from link if it doesn't already exist |
+
+## 📁 File Organization Tips
+
+### Recommended Structure
+\`\`\`
+your-workspace/
+├── start.md              # Your main index/homepage
+├── projects/
+│   ├── project-a.md
+│   └── project-b.md
+├── notes/
+│   ├── meeting-notes.md
+│   └── research-ideas.md
+├── notebooks/
+│   ├── analysis.ipynb
+│   └── data-processing.ipynb
+└── PKM-Extension-Guide.md # This guide
+\`\`\`
+
+### Best Practices
+- Use \`start.md\` as your main hub/homepage
+- Create meaningful note titles for better wikilink suggestions
+- Link liberally - connections emerge over time
+- Use headings to create linkable sections
+- Embed relevant notebook outputs in your notes
+
+## 🔧 Advanced Usage
+
+### Block Embedding
+You can embed specific sections of files, and use a custom title if you want:
+\`\`\`markdown
+![[research-notes.md#methodology]]
+![[analysis.ipynb#results-cell]]
+![[summary#results|Key Results]]
+\`\`\`
+
+You can also indicate 
+
+### Cross-referencing Notebooks and Notes
+\`\`\`markdown
+In my analysis [[data-analysis.ipynb]], I found that...
+
+The methodology described in [[research-methods.md]] was applied...
+\`\`\`
+
+### Creating a Personal Wiki
+- Start with broad topic pages
+- Link to specific project notes
+- Create index pages for different areas
+- Use consistent naming conventions
+
+## 🎯 Workflow Examples
+
+### Research Workflow
+1. Create project overview in \`project-overview.md\`
+2. Link to relevant notebooks: \`[[data-collection.ipynb]]\`
+3. Reference methodology: \`[[research-methods.md]]\`
+4. Track progress with linked daily notes
+
+### Learning Workflow  
+1. Create topic index: \`[[machine-learning.md]]\`
+2. Link to specific concepts: \`[[neural-networks.md]]\`
+3. Embed code examples: \`![[ml-examples.ipynb]]\`
+4. Build concept maps with wikilinks
+
+## 🆘 Troubleshooting
+
+### Links Not Working?
+- Ensure file exists in workspace
+- Check file extension (.md for markdown, .ipynb for notebooks)
+- Use exact filename in wikilinks
+
+### Search Not Finding Files?
+- Make sure files are saved
+- Check that content is in markdown or notebook format
+- Try alternative search terms
+
+### Backlinks Missing?
+- Save files to update backlink index
+- Ensure wikilinks use correct syntax: \`[[filename]]\`
+
+## 📚 Getting Help
+
+- Access this guide anytime via Command Palette: "PKM: Open Documentation"
+- All PKM commands available in Command Palette (Cmd/Ctrl + Shift + P)
+- Look for "PKM:" prefix in command palette
+
+---
+
+**Happy note-taking!** 🎉
+
+*This file was automatically created by the PKM Extension. You can edit or delete it as needed.*
+`;
+    try {
+        // Check if file already exists
+        const contents = app.serviceManager.contents;
+        const fileName = 'PKM-Extension-Guide.md';
+        try {
+            await contents.get(fileName);
+            console.log('PKM documentation already exists');
+            return;
+        }
+        catch (error) {
+            // File doesn't exist, create it
+        }
+        // Create the documentation file
+        await contents.save(fileName, {
+            type: 'file',
+            format: 'text',
+            content: docContent
+        });
+        console.log('PKM documentation created: PKM-Extension-Guide.md');
+    }
+    catch (error) {
+        console.warn('Could not create PKM documentation:', error);
+    }
+}
 
 
 /***/ }),
@@ -3798,4 +4064,4 @@ const wikilinkPlugin = {
 /***/ })
 
 }]);
-//# sourceMappingURL=lib_index_js.cdcf861eca7066efc2f9.js.map
+//# sourceMappingURL=lib_index_js.45d456fea10ebec48cdf.js.map

@@ -16,7 +16,7 @@ import { backlinksPlugin } from './backlinks';
 import { blockEmbeddingPlugin } from './block-embedding';
 import { notebookEmbedPlugin } from './notebook-embed';
 import { codeCopyPlugin } from './code-copy';
-// import { welcomePlugin } from './welcome'; // Causes JupyterLab to not load
+import { welcomePlugin } from './welcome'; // Still causes issues
 
 /**
  * The main extension that combines all PKM features
@@ -57,7 +57,7 @@ const extension: JupyterFrontEndPlugin<void> = {
  */
 export default [
   extension,
-  // welcomePlugin, // Causes JupyterLab to not load
+  welcomePlugin,
   markdownPreviewPlugin,
   wikilinkPlugin,
   searchPlugin,
@@ -65,8 +65,4 @@ export default [
   blockEmbeddingPlugin,
   notebookEmbedPlugin,
   codeCopyPlugin
-  // All working plugins added!
-  // searchPlugin,
-  // backlinksPlugin,
-  // notebookEmbedPlugin
 ];
