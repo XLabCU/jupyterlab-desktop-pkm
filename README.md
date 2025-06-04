@@ -1,5 +1,7 @@
 # JupyterLab PKM Extension
 
+**we developed this for our own internal use, and we used Claude to scaffold some parts. We're not likely to develop it any further with any more features, so if there's something you want, fork and develop as you will.**
+
 [![PyPI version](https://badge.fury.io/py/jupyterlab-pkm.svg)](https://badge.fury.io/py/jupyterlab-pkm)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -252,4 +254,4 @@ This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICE
 
 ## Future?
 
-Jun 3, 2025: Everything I need, I think.
+Jun 3, 2025: Everything we need, we think.

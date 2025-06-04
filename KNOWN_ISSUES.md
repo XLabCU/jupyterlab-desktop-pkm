@@ -22,6 +22,25 @@
 - Review markdown preview toggle logic for production builds
 - Check for console errors during workspace initialization
 
+### Backlinks Index Not Built on Startup ✅ **FIXED**
+**Status**: **FIXED** - Index built when backlinks panel opens  
+**Severity**: High  
+**Description**: The wikilink index (`wikilink-index.json`) was only built when:
+1. A new markdown file was created
+2. The backlinks panel was explicitly opened
+3. Manual index rebuild was triggered
+
+This meant that existing wikilinks in a folder weren't detected on first open.
+
+**Root Cause**: Index building was moved to main extension startup, but this caused timing issues.
+
+**Fix Applied**: 
+- Reverted to JupyterLite approach: index is built when backlinks panel is first opened
+- Index building happens automatically when panel loads if index doesn't exist
+- All existing files are properly indexed when panel opens for the first time
+- File watching updates index when files are saved
+
+
 ### Preview/Source Toggle Focus Issues
 **Status**: Intermittent, needs refinement  
 **Severity**: Medium  
@@ -55,13 +74,11 @@
 - [ ] Add error handling for startup failures
 - [ ] Create diagnostic tools for troubleshooting
 
-### Medium Priority  
+### Low Priority
 - [ ] Performance optimization for large workspaces
 - [ ] Better wikilink auto-completion
 - [ ] Enhanced search functionality
 - [ ] Mobile/responsive design improvements
-
-### Low Priority
 - [ ] Themes and customization
 - [ ] Advanced PKM features (tags, graph view)
 - [ ] Integration with external tools
@@ -93,21 +110,3 @@
 - 🎯 Improve focus detection reliability
 - 🎯 Add better error handling
 
-## 🤝 Contributing to Fixes
-
-If you encounter these issues:
-
-1. **Report Details**: Include JupyterLab version, OS, and exact error messages
-2. **Console Logs**: Check browser developer tools for errors
-3. **Reproduction Steps**: Document exact steps to reproduce issues
-4. **Workarounds**: Share any temporary solutions found
-
-## 📞 Support Channels
-
-- **GitHub Issues**: Primary bug reporting
-- **Development Branch**: Test fixes before release
-- **Documentation**: Keep updated with known workarounds
-
----
-
-**Note**: This extension is actively developed. While core features work well in development environment, production deployment needs refinement. We appreciate patience and feedback as we improve stability.

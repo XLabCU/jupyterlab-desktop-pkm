@@ -18,6 +18,7 @@ import { notebookEmbedPlugin } from './notebook-embed';
 import { codeCopyPlugin } from './code-copy';
 import { welcomePlugin } from './welcome'; // Still causes issues
 
+
 /**
  * The main extension that combines all PKM features
  */
@@ -51,6 +52,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     });
   }
 };
+
 
 /**
  * Export all plugins
