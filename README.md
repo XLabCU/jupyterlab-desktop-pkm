@@ -1,6 +1,9 @@
-# JupyterLab Personal Knowledge Management Extension
+# JupyterLab PKM Extension
 
-Transform your JupyterLab Desktop into a Personal Knowledge Management (PKM) system with wikilinks, backlinks, search, and notebook cell embedding capabilities.
+[![PyPI version](https://badge.fury.io/py/jupyterlab-pkm.svg)](https://badge.fury.io/py/jupyterlab-pkm)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
+Transform your JupyterLab into a Personal Knowledge Management (PKM) system with wikilinks, backlinks, search, and notebook cell embedding capabilities.
 
 ## 🌟 Overview
 
@@ -48,11 +51,22 @@ Reference and embed content from other markdown files:
 - **Auto-preview startup**: Files open in preview mode by default
 - **Floating toggle button**: Visual mode indicator
 
-## 🚀 Installation
+## 📦 Installation
+
+### Using pip (Recommended)
+
+```bash
+pip install jupyterlab-pkm
+```
+
+### Using conda
+
+```bash
+conda install -c conda-forge jupyterlab-pkm
+```
 
 ### Prerequisites
-- JupyterLab Desktop 4.0+
-- Node.js 18+
+- JupyterLab 4.0+
 - Python 3.8+
 
 ### Install from Source
@@ -218,16 +232,6 @@ jlpm lint
 jlpm watch
 ```
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and add tests
-4. Run the test suite: `jlpm test`
-5. Commit your changes: `git commit -am 'Add feature'`
-6. Push to the branch: `git push origin feature-name`
-7. Submit a pull request
-
 ## 📄 License
 
 This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
@@ -245,3 +249,7 @@ This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICE
 - [Obsidian](https://obsidian.md/) - Dedicated PKM application
 - [Logseq](https://logseq.com/) - Local-first knowledge base
 - [Tangent Notes](https://www.tangentnotes.com/) - Note-taking with wikilinks
+
+## Future?
+
+Jun 3, 2025: Everything I need, I think.
