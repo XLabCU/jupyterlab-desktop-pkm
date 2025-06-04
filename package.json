@@ -11,9 +11,9 @@
     "wikilinks",
     "backlinks"
   ],
-  "homepage": "https://github.com/XLabCU/jupyterlab-pkm",
+  "homepage": "https://github.com/XLabCU/jupyterlab-desktop-pkm",
   "bugs": {
-    "url": "https://github.com/XLabCU/jupyterlab-pkm/issues"
+    "url": "https://github.com/XLabCU/jupyterlab-desktop-pkm/issues"
   },
   "license": "BSD-3-Clause",
   "author": "Shawn Graham",
@@ -27,7 +27,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/XLabCU/jupyterlab-pkm.git"
+    "url": "https://github.com/XLabCU/jupyterlab-desktop-pkm.git"
   },
   "scripts": {
     "build": "jlpm build:lib && jlpm build:labextension:dev",
