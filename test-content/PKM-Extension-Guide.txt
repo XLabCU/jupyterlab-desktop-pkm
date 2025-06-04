@@ -40,8 +40,6 @@ In ipynb files, you can use the Cell Overview Tool to quickly see the cell id fo
 - See all files that link to the current note
 - Automatic backlink detection
 - Navigate between related notes easily
-- FIRST TIME USE: build the backlinks index with the PKM: Build/Rebuild Wikilink Index command
-- Open/close the backlinks panel to refresh the view
 
 ## ⌨️ Keyboard Shortcuts
 

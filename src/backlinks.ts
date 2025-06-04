@@ -280,11 +280,18 @@ class BacklinksPanelWidget extends Widget {
     return wikilinks;
   }
 
-  private async getAllMarkdownAndNotebookFiles(path: string): Promise<string[]> {
+  private async getAllMarkdownAndNotebookFiles(path: string, visitedPaths = new Set<string>()): Promise<string[]> {
     const files: string[] = [];
     
-    // Try multiple directory access approaches
-    const pathsToTry = [path, '', '.', 'test-content', './test-content'];
+    // Prevent infinite recursion by tracking visited paths
+    if (visitedPaths.has(path)) {
+      console.log(`Backlinks: Skipping already visited path: "${path}"`);
+      return files;
+    }
+    visitedPaths.add(path);
+    
+    // Only try multiple paths for the initial call
+    const pathsToTry = visitedPaths.size === 1 ? [path, '', '.', 'test-content', './test-content'] : [path];
     
     for (const tryPath of pathsToTry) {
       try {
@@ -307,18 +314,21 @@ class BacklinksPanelWidget extends Widget {
           
           for (const item of listing.content) {
             console.log(`Backlinks: Processing item: ${item.name} (type: ${item.type})`);
-            if (item.type === 'directory') {
-              console.log(`Backlinks: Recursively searching subdirectory: ${item.path}`);
-              const subFiles = await this.getAllMarkdownAndNotebookFiles(item.path);
-              files.push(...subFiles);
+            if (item.type === 'directory' && !item.name.startsWith('.') && item.name !== '__pycache__') {
+              // Avoid system directories and prevent infinite recursion
+              if (!visitedPaths.has(item.path)) {
+                console.log(`Backlinks: Recursively searching subdirectory: ${item.path}`);
+                const subFiles = await this.getAllMarkdownAndNotebookFiles(item.path, visitedPaths);
+                files.push(...subFiles);
+              }
             } else if (item.type === 'file' && (item.name.endsWith('.md') || item.name.endsWith('.ipynb'))) {
               console.log(`Backlinks: Found target file: ${item.path}`);
               files.push(item.path);
             }
           }
           
-          // If we found content, break out of the loop
-          if (listing.content.length > 0) {
+          // If we found content, break out of the loop (only for initial call)
+          if (listing.content.length > 0 && visitedPaths.size === 1) {
             console.log(`Backlinks: Using directory "${tryPath}" with ${files.length} matching files`);
             break;
           }
@@ -329,8 +339,8 @@ class BacklinksPanelWidget extends Widget {
       }
     }
     
-    // If no files found, try a different approach: get the current working directory info
-    if (files.length === 0) {
+    // Only do fallback for initial call
+    if (files.length === 0 && visitedPaths.size === 1) {
       try {
         console.log('Backlinks: No files found, trying to get current directory info...');
         const rootListing = await this.docManager.services.contents.get('');
@@ -345,7 +355,7 @@ class BacklinksPanelWidget extends Widget {
       }
     }
     
-    console.log(`Backlinks: Total files found: ${files.length}`, files);
+    console.log(`Backlinks: Total files found for "${path}": ${files.length}`, files);
     return files;
   }
 
@@ -485,7 +495,7 @@ class BacklinksPanelWidget extends Widget {
   }
 
   private async handleCurrentChanged(): Promise<void> {
-    // console.log('Backlinks: handleCurrentChanged called');
+    console.log('Backlinks: handleCurrentChanged called');
     if (this._isIndexing) {
       await this._indexingPromise; // Wait for any ongoing initialization
     }
@@ -499,15 +509,15 @@ class BacklinksPanelWidget extends Widget {
       }
     }
 
-    // console.log(`Backlinks: Active widget path: "${newPath}"`);
+    console.log(`Backlinks: Active widget path: "${newPath}" (previous: "${this._currentPath}")`);
     if (newPath !== this._currentPath) {
       this._currentPath = newPath;
-      // console.log('Backlinks: Path changed, updating backlinks for:', newPath);
+      console.log('Backlinks: Path changed, updating backlinks for:', newPath);
       this.updateBacklinks();
     } else {
-      // console.log('Backlinks: Path unchanged, no update needed based on path.');
-      // Still might need to update if index was just built/loaded
+      // Even if path is the same, refresh if the panel is showing but has no backlinks displayed
       if (!this._container.innerHTML.includes('jp-pkm-backlinks-item') && this._wikilinkIndex) {
+        console.log('Backlinks: Path unchanged but no backlinks shown, refreshing...');
         this.updateBacklinks();
       }
     }
@@ -687,8 +697,17 @@ class BacklinksPanelWidget extends Widget {
   }
 
   public refresh(): void {
-    // console.log('Backlinks: Manual refresh called via panel method');
-    this.handleCurrentChanged();
+    console.log('Backlinks: Manual refresh called via panel method');
+    // Force refresh by clearing current path and calling handleCurrentChanged
+    const oldPath = this._currentPath;
+    this._currentPath = '';
+    this.handleCurrentChanged().then(() => {
+      // If no file was detected, restore the old path and try to update anyway
+      if (!this._currentPath && oldPath) {
+        this._currentPath = oldPath;
+        this.updateBacklinks();
+      }
+    });
   }
 
   public async rebuildIndex(): Promise<void> {
@@ -740,16 +759,33 @@ export const backlinksPlugin: JupyterFrontEndPlugin<void> = {
       execute: () => {
         if (backlinksPanelWidgetInstance && !backlinksPanelWidgetInstance.isDisposed) {
           if (backlinksPanelWidgetInstance.isVisible) {
+            // If visible, close it
             backlinksPanelWidgetInstance.close();
           } else {
-            app.shell.add(backlinksPanelWidgetInstance, 'right', { activate: true });
+            // If not visible, add it and make sure it's properly activated
+            app.shell.add(backlinksPanelWidgetInstance, 'right');
+            app.shell.activateById(backlinksPanelWidgetInstance.id);
+            // Trigger a refresh to show current file's backlinks
+            backlinksPanelWidgetInstance.content.refresh();
           }
         } else {
+          // Create new panel
           const widgetContent = new BacklinksPanelWidget(app, docManager, editorTracker, markdownTracker, notebookTracker);
           backlinksPanelWidgetInstance = new MainAreaWidget({ content: widgetContent });
           backlinksPanelWidgetInstance.id = 'pkm-backlinks-panel';
-          // Title is set by BacklinksPanelWidget
-          app.shell.add(backlinksPanelWidgetInstance, 'right', { activate: true });
+          backlinksPanelWidgetInstance.title.label = 'Backlinks';
+          backlinksPanelWidgetInstance.title.closable = true;
+          
+          // Add to shell and make sure it's visible and active
+          app.shell.add(backlinksPanelWidgetInstance, 'right');
+          app.shell.activateById(backlinksPanelWidgetInstance.id);
+          
+          // Trigger a refresh to show current file's backlinks
+          setTimeout(() => {
+            if (backlinksPanelWidgetInstance && !backlinksPanelWidgetInstance.isDisposed) {
+              backlinksPanelWidgetInstance.content.refresh();
+            }
+          }, 100);
         }
       }
     });

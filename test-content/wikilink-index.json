@@ -1,5 +1,9 @@
 {
   "links": {
+    "start.md": [
+      "introduction",
+      "sample-text-analysis"
+    ],
     "PKM-Extension-Guide.md": [
       "Note Name",
       "Note Name",
@@ -18,13 +22,17 @@
       "ml-examples",
       "filename"
     ],
-    "start.md": [
-      "introduction",
-      "sample-text-analysis",
-      "newlink"
+    "newlink.md": [
+      "start"
     ]
   },
   "backlinks": {
+    "introduction": [
+      "start.md"
+    ],
+    "sample-text-analysis": [
+      "start.md"
+    ],
     "Note Name": [
       "PKM-Extension-Guide.md"
     ],
@@ -67,17 +75,19 @@
     "filename": [
       "PKM-Extension-Guide.md"
     ],
-    "introduction": [
-      "start.md"
-    ],
-    "sample-text-analysis": [
-      "start.md"
-    ],
-    "newlink": [
-      "start.md"
+    "start": [
+      "newlink.md"
     ]
   },
   "contexts": {
+    "start.md->introduction": {
+      "context": "[[introduction]]",
+      "lineNumber": 3
+    },
+    "start.md->sample-text-analysis": {
+      "context": "[[sample-text-analysis.ipynb]]",
+      "lineNumber": 5
+    },
     "PKM-Extension-Guide.md->Note Name": {
       "context": "### 📝 Wikilinks\n- `[[Note Name]]` - Create links between notes\n- `[[note|display text]]` - Link with custom display text",
       "lineNumber": 15
@@ -96,56 +106,48 @@
     },
     "PKM-Extension-Guide.md->research-notes.md#methodology": {
       "context": "```markdown\n![[research-notes.md#methodology]]\n![[analysis.ipynb#results-cell]]",
-      "lineNumber": 84
+      "lineNumber": 86
     },
     "PKM-Extension-Guide.md->analysis.ipynb#results-cell": {
       "context": "![[research-notes.md#methodology]]\n![[analysis.ipynb#results-cell]]\n![[summary#results|Key Results]]",
-      "lineNumber": 85
+      "lineNumber": 87
     },
     "PKM-Extension-Guide.md->summary#results": {
       "context": "![[analysis.ipynb#results-cell]]\n![[summary#results|Key Results]]\n```",
-      "lineNumber": 86
+      "lineNumber": 88
     },
     "PKM-Extension-Guide.md->data-analysis": {
       "context": "```markdown\nIn my analysis [[data-analysis.ipynb]], I found that...",
-      "lineNumber": 93
+      "lineNumber": 95
     },
     "PKM-Extension-Guide.md->research-methods": {
       "context": "2. Link to relevant notebooks: `[[data-collection.ipynb]]`\n3. Reference methodology: `[[research-methods.md]]`\n4. Track progress with linked daily notes",
-      "lineNumber": 109
+      "lineNumber": 111
     },
     "PKM-Extension-Guide.md->data-collection": {
       "context": "1. Create project overview in `project-overview.md`\n2. Link to relevant notebooks: `[[data-collection.ipynb]]`\n3. Reference methodology: `[[research-methods.md]]`",
-      "lineNumber": 108
+      "lineNumber": 110
     },
     "PKM-Extension-Guide.md->machine-learning": {
       "context": "### Learning Workflow  \n1. Create topic index: `[[machine-learning.md]]`\n2. Link to specific concepts: `[[neural-networks.md]]`",
-      "lineNumber": 113
+      "lineNumber": 115
     },
     "PKM-Extension-Guide.md->neural-networks": {
       "context": "1. Create topic index: `[[machine-learning.md]]`\n2. Link to specific concepts: `[[neural-networks.md]]`\n3. Embed code examples: `![[ml-examples.ipynb]]`",
-      "lineNumber": 114
+      "lineNumber": 116
     },
     "PKM-Extension-Guide.md->ml-examples": {
       "context": "2. Link to specific concepts: `[[neural-networks.md]]`\n3. Embed code examples: `![[ml-examples.ipynb]]`\n4. Build concept maps with wikilinks",
-      "lineNumber": 115
+      "lineNumber": 117
     },
     "PKM-Extension-Guide.md->filename": {
       "context": "- Save files to update backlink index\n- Ensure wikilinks use correct syntax: `[[filename]]`",
-      "lineNumber": 132
+      "lineNumber": 134
     },
-    "start.md->introduction": {
-      "context": "[[introduction]]",
-      "lineNumber": 3
-    },
-    "start.md->sample-text-analysis": {
-      "context": "[[sample-text-analysis.ipynb]]",
-      "lineNumber": 5
-    },
-    "start.md->newlink": {
-      "context": "[[newlink]]",
-      "lineNumber": 7
+    "newlink.md->start": {
+      "context": "[[start]]",
+      "lineNumber": 4
     }
   },
-  "lastUpdated": "2025-06-04T15:21:57.881Z"
+  "lastUpdated": "2025-06-04T18:47:04.034Z"
 }

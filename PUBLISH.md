@@ -37,8 +37,8 @@ python -m build
 ```
 
 This creates:
-- `dist/jupyterlab_pkm-0.1.0.tar.gz` (source distribution)
-- `dist/jupyterlab_pkm-0.1.0-py3-none-any.whl` (wheel)
+- `dist/jupyterlab_pkm-0.1.1.tar.gz` (source distribution)
+- `dist/jupyterlab_pkm-0.1.1-py3-none-any.whl` (wheel)
 
 ### Step 2: Test on TestPyPI
 
@@ -141,7 +141,7 @@ git push --tags
 3. **Installation**: Users can install directly from GitHub
 
 ```bash
-pip install https://github.com/XLabCU/jupyterlab-pkm/releases/download/v0.1.0/jupyterlab_pkm-0.1.0-py3-none-any.whl
+pip install https://github.com/XLabCU/jupyterlab-desktop-pkm/releases/download/v0.1.0/jupyterlab_pkm-0.1.0-py3-none-any.whl
 ```
 
 ### conda-forge
