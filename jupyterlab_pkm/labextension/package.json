@@ -1,6 +1,6 @@
 {
   "name": "@jupyterlab/pkm-extension",
-  "version": "0.1.2",
+  "version": "0.1.8",
   "description": "Personal Knowledge Management extension for JupyterLab Desktop",
   "keywords": [
     "jupyter",
@@ -100,6 +100,9 @@
     "yjs": "^13.5.0"
   },
   "jupyterlab": {
+    "extension": true,
+    "schemaDir": "schema",
+    "outputDir": "jupyterlab_pkm/labextension",
     "discovery": {
       "server": {
         "managers": [
@@ -110,11 +113,8 @@
         }
       }
     },
-    "extension": true,
-    "outputDir": "jupyterlab_pkm/labextension",
-    "schemaDir": "schema",
     "_build": {
-      "load": "static/remoteEntry.ac9fb59941711cc0f0ed.js",
+      "load": "static/remoteEntry.2d743fd128ddc46cfdb6.js",
       "extension": "./extension",
       "style": "./style"
     }
