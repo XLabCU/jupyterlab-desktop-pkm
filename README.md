@@ -75,7 +75,7 @@ conda install -c conda-forge jupyterlab-pkm
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/XLabCU/jupyterlab-pkm.git
+   git clone https://github.com/XLabCU/jupyterlab-desktop-pkm.git
    cd jupyterlab-pkm
    ```
 
@@ -98,7 +98,7 @@ For development work:
 
 ```bash
 # Clone and install in development mode
-git clone https://github.com/XLabCU/jupyterlab-pkm.git
+git clone https://github.com/XLabCU/jupyterlab-desktop-pkm.git
 cd jupyterlab-pkm
 
 # Install dependencies and build

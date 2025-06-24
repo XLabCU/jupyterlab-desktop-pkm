@@ -2528,6 +2528,7 @@ __metadata:
     "@jupyterlab/services": ^7.0.0
     "@jupyterlab/statedb": ^4.0.0
     "@jupyterlab/testutils": ^4.0.0
+    "@jupyterlab/theme-dark-extension": ^4.4.3
     "@lumino/messaging": ^2.0.0
     "@lumino/signaling": ^2.0.0
     "@lumino/widgets": ^2.0.0
@@ -2686,6 +2687,17 @@ __metadata:
     "@jupyterlab/rendermime": ^4.4.3
     "@jupyterlab/testing": ^4.4.3
   checksum: a5f593c796418800c0b0ee46a00c9b740376b4dbd427bdcb48dc9a0d2536d6cd90b94a3526435b53226895ab1befeae31c5f659ae30db3ebd42b63f51fafe814
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/theme-dark-extension@npm:^4.4.3":
+  version: 4.4.3
+  resolution: "@jupyterlab/theme-dark-extension@npm:4.4.3"
+  dependencies:
+    "@jupyterlab/application": ^4.4.3
+    "@jupyterlab/apputils": ^4.5.3
+    "@jupyterlab/translation": ^4.4.3
+  checksum: e11f06f94cd93c4c4853c047a0760ce551f9c7316ae0f598284c829279cdf426eea2f2fd36eafe3493f54b40002a4fa350cee4a5a8fe99e1103e7ffb68439803
   languageName: node
   linkType: hard
 
@@ -5568,14 +5580,14 @@ __metadata:
   linkType: hard
 
 "fdir@npm:^6.4.4":
-  version: 6.4.5
-  resolution: "fdir@npm:6.4.5"
+  version: 6.4.6
+  resolution: "fdir@npm:6.4.6"
   peerDependencies:
     picomatch: ^3 || ^4
   peerDependenciesMeta:
     picomatch:
       optional: true
-  checksum: 14efd2d6617a6f9fb314916ccff64e00bdb96216f26542ec9dfa532ed60a7ebb45463f7009aa215c14071566bf43caeb8ba268ccb52a11e6b51e4aaa8cb58d81
+  checksum: fe9f3014901d023cf631831dcb9eae5447f4d7f69218001dd01ecf007eccc40f6c129a04411b5cc273a5f93c14e02e971e17270afc9022041c80be924091eb6f
   languageName: node
   linkType: hard
 
@@ -9337,12 +9349,12 @@ __metadata:
   linkType: hard
 
 "socks@npm:^2.8.3":
-  version: 2.8.4
-  resolution: "socks@npm:2.8.4"
+  version: 2.8.5
+  resolution: "socks@npm:2.8.5"
   dependencies:
     ip-address: ^9.0.5
     smart-buffer: ^4.2.0
-  checksum: cd1edc924475d5dfde534adf66038df7e62c7343e6b8c0113e52dc9bb6a0a10e25b2f136197f379d695f18e8f0f2b7f6e42977bf720ddbee912a851201c396ad
+  checksum: d39a77a8c91cfacafc75c67dba45925eccfd884a8a4a68dcda6fb9ab7f37de6e250bb6db3721e8a16a066a8e1ebe872d4affc26f3eb763f4befedcc7b733b7ed
   languageName: node
   linkType: hard
 

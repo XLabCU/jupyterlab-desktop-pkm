@@ -1,6 +1,6 @@
 {
   "name": "@jupyterlab/pkm-extension",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Personal Knowledge Management extension for JupyterLab Desktop",
   "keywords": [
     "jupyter",
@@ -76,6 +76,7 @@
   "devDependencies": {
     "@jupyterlab/builder": "^4.0.0",
     "@jupyterlab/testutils": "^4.0.0",
+    "@jupyterlab/theme-dark-extension": "^4.4.3",
     "@types/jest": "^29.2.0",
     "@types/json-schema": "^7.0.15",
     "@types/node": "^18.0.0",
