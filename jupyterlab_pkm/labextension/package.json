@@ -1,6 +1,6 @@
 {
   "name": "@jupyterlab/pkm-extension",
-  "version": "0.1.10",
+  "version": "0.1.12",
   "description": "Personal Knowledge Management extension for JupyterLab Desktop",
   "keywords": [
     "jupyter",
@@ -115,7 +115,7 @@
       }
     },
     "_build": {
-      "load": "static/remoteEntry.6c18e76d1f457ceaff15.js",
+      "load": "static/remoteEntry.d4865e2b13e73fd47cbe.js",
       "extension": "./extension",
       "style": "./style"
     }

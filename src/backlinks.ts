@@ -175,14 +175,8 @@ class BacklinksPanelWidget extends Widget {
     };
 
     try {
-      // Try current directory first, fallback to root if needed
-      let allFiles: string[] = [];
-      try {
-        allFiles = await this.getAllMarkdownAndNotebookFiles('.');
-      } catch (error) {
-        console.log('Backlinks: Current directory "." failed, trying empty string...');
-        allFiles = await this.getAllMarkdownAndNotebookFiles('');
-      }
+      // FIXED: Simplified file discovery to prevent infinite loops
+      const allFiles = await this.getAllMarkdownAndNotebookFiles();
       console.log(`Backlinks: Found ${allFiles.length} files to index`);
 
       for (const filePath of allFiles) {
@@ -280,83 +274,76 @@ class BacklinksPanelWidget extends Widget {
     return wikilinks;
   }
 
-  private async getAllMarkdownAndNotebookFiles(path: string, visitedPaths = new Set<string>()): Promise<string[]> {
+  // FIXED: Completely rewritten file discovery method to prevent infinite loops
+  private async getAllMarkdownAndNotebookFiles(): Promise<string[]> {
     const files: string[] = [];
+    const maxDepth = 5; // Prevent infinite recursion
     
-    // Prevent infinite recursion by tracking visited paths
-    if (visitedPaths.has(path)) {
-      console.log(`Backlinks: Skipping already visited path: "${path}"`);
-      return files;
-    }
-    visitedPaths.add(path);
-    
-    // Only try multiple paths for the initial call
-    const pathsToTry = visitedPaths.size === 1 ? [path, '', '.', 'test-content', './test-content'] : [path];
-    
-    for (const tryPath of pathsToTry) {
-      try {
-        console.log(`Backlinks: Trying to scan directory: "${tryPath}"`);
-        const listing = await this.docManager.services.contents.get(tryPath, { 
-          type: 'directory',
-          content: true 
-        });
-        
-        console.log(`Backlinks: Response for "${tryPath}":`, {
-          type: listing.type,
-          format: listing.format,
-          hasContent: !!listing.content,
-          contentType: Array.isArray(listing.content) ? 'array' : typeof listing.content,
-          contentLength: listing.content?.length
-        });
-        
-        if (listing.content && Array.isArray(listing.content)) {
-          console.log(`Backlinks: Successfully found ${listing.content.length} items in "${tryPath}"`);
-          
-          for (const item of listing.content) {
-            console.log(`Backlinks: Processing item: ${item.name} (type: ${item.type})`);
-            if (item.type === 'directory' && !item.name.startsWith('.') && item.name !== '__pycache__') {
-              // Avoid system directories and prevent infinite recursion
-              if (!visitedPaths.has(item.path)) {
-                console.log(`Backlinks: Recursively searching subdirectory: ${item.path}`);
-                const subFiles = await this.getAllMarkdownAndNotebookFiles(item.path, visitedPaths);
-                files.push(...subFiles);
-              }
-            } else if (item.type === 'file' && (item.name.endsWith('.md') || item.name.endsWith('.ipynb'))) {
-              console.log(`Backlinks: Found target file: ${item.path}`);
-              files.push(item.path);
-            }
-          }
-          
-          // If we found content, break out of the loop (only for initial call)
-          if (listing.content.length > 0 && visitedPaths.size === 1) {
-            console.log(`Backlinks: Using directory "${tryPath}" with ${files.length} matching files`);
-            break;
-          }
-        }
-      } catch (error) {
-        console.log(`Backlinks: Path "${tryPath}" failed:`, (error as any)?.message || error);
-        continue;
-      }
+    try {
+      await this.scanDirectory('', files, new Set(), 0, maxDepth);
+    } catch (error) {
+      console.warn('Backlinks: Error scanning files:', error);
     }
     
-    // Only do fallback for initial call
-    if (files.length === 0 && visitedPaths.size === 1) {
-      try {
-        console.log('Backlinks: No files found, trying to get current directory info...');
-        const rootListing = await this.docManager.services.contents.get('');
-        console.log('Backlinks: Root directory listing:', rootListing);
-        
-        // Also check the browser's current location
-        if (typeof window !== 'undefined' && window.location) {
-          console.log('Backlinks: Current browser location:', window.location.href);
-        }
-      } catch (error) {
-        console.log('Backlinks: Root directory check failed:', error);
-      }
-    }
-    
-    console.log(`Backlinks: Total files found for "${path}": ${files.length}`, files);
+    console.log(`Backlinks: Total files found: ${files.length}`, files);
     return files;
+  }
+
+  // FIXED: New recursive method with proper depth limiting and cycle detection
+  private async scanDirectory(
+    dirPath: string, 
+    files: string[], 
+    visited: Set<string>, 
+    currentDepth: number, 
+    maxDepth: number
+  ): Promise<void> {
+    // Prevent infinite recursion
+    if (currentDepth >= maxDepth) {
+      console.log(`Backlinks: Max depth ${maxDepth} reached for ${dirPath}`);
+      return;
+    }
+
+    // Normalize the path and check for cycles
+    const normalizedPath = dirPath.replace(/\/+$/, '') || '.';
+    if (visited.has(normalizedPath)) {
+      console.log(`Backlinks: Already visited ${normalizedPath}, skipping`);
+      return;
+    }
+    visited.add(normalizedPath);
+
+    try {
+      console.log(`Backlinks: Scanning directory "${dirPath}" at depth ${currentDepth}`);
+      
+      const listing = await this.docManager.services.contents.get(dirPath, { 
+        type: 'directory',
+        content: true 
+      });
+      
+      if (!listing.content || !Array.isArray(listing.content)) {
+        console.log(`Backlinks: No content found in ${dirPath}`);
+        return;
+      }
+
+      console.log(`Backlinks: Found ${listing.content.length} items in "${dirPath}"`);
+      
+      for (const item of listing.content) {
+        // Skip hidden files and system directories
+        if (item.name.startsWith('.') || item.name === '__pycache__' || item.name === 'node_modules') {
+          continue;
+        }
+
+        if (item.type === 'file' && (item.name.endsWith('.md') || item.name.endsWith('.ipynb'))) {
+          console.log(`Backlinks: Found target file: ${item.path}`);
+          files.push(item.path);
+        } else if (item.type === 'directory') {
+          // Recursively scan subdirectory with increased depth
+          await this.scanDirectory(item.path, files, visited, currentDepth + 1, maxDepth);
+        }
+      }
+      
+    } catch (error) {
+      console.log(`Backlinks: Error scanning directory "${dirPath}":`, (error as any)?.message || error);
+    }
   }
 
   private setupTracking(): void {
@@ -830,6 +817,18 @@ export const backlinksPlugin: JupyterFrontEndPlugin<void> = {
         category: 'PKM'
       });
     }
+// Add context menu item for backlinks command
+    app.contextMenu.addItem({
+      command: 'pkm:toggle-backlinks-panel',
+      selector: '.jp-MarkdownViewer',
+      rank: 500 // Controls position in context menu
+    });
+    
+    app.contextMenu.addItem({
+      command: 'pkm:toggle-backlinks-panel',
+      selector: '.jp-FileEditor',
+      rank: 500
+    });
 
     app.commands.addKeyBinding({
       command: COMMAND_TOGGLE_BACKLINKS,

@@ -27,6 +27,9 @@ export const welcomePlugin: JupyterFrontEndPlugin<void> = {
     // Create documentation file on activation
     await createPKMDocumentation(app);
     
+    // Create start.md file on activation
+    await createStartFile(app);
+    
     // Add command to open documentation
     app.commands.addCommand(CommandIDs.showWelcome, {
       label: 'PKM: Open Documentation',
@@ -75,7 +78,7 @@ async function createPKMDocumentation(app: JupyterFrontEnd): Promise<void> {
 
 ### 🔍 Search & Navigation
 - **Alt + F** - Global search across all files
-- **Alt + B** - Show backlinks (what links to current note)
+- **Alt + B** - Show backlinks (what links to current note) (also available via context menu)
 - Full-text search across markdown files and notebooks
 - Quick navigation between connected notes
 
@@ -83,6 +86,7 @@ async function createPKMDocumentation(app: JupyterFrontEnd): Promise<void> {
 - \`![[notebook.ipynb#cell-id]]\` - Embed specific cells from ipynb files 
 - \`![[file.md#heading]]\` - Embed sections from markdown files
 - Live preview of embedded content
+- All markdown notes, including those with embedded content can be printed, saved to pdf, or exported to word. Turn on the note preview, then right-click for the context menu (or see the Command Palette, PKM: commands.)
 
 In ipynb files, you can use the Cell Overview Tool to quickly see the cell id for embedding. Use \`PKM: Show Notebook Cell Overview\` from the command palette to see all cells with their IDs, types, and previews.
 
@@ -120,7 +124,10 @@ your-workspace/
 ├── notes/
 │   ├── meeting-notes.md
 │   └── research-ideas.md
-├── notebooks/
+├── biblio/
+│   ├── @GrahamS-2022a.md
+│   └── @GrahamS-2022b.md
+├── analytical_notes/
 │   ├── analysis.ipynb
 │   └── data-processing.ipynb
 └── PKM-Extension-Guide.md # This guide
@@ -228,3 +235,66 @@ The methodology described in [[research-methods.md]] was applied...
   }
 }
 
+/**
+ * Create start.md file if it doesn't exist
+ */
+async function createStartFile(app: JupyterFrontEnd): Promise<void> {
+  const startContent = `# Welcome to Your PKM System
+
+This is your starting note. Try creating wikilinks:
+
+- [[My First Note]] - Creates a new note
+- [[https://example.com|External Link]] - Links to external sites
+
+## Features:
+- **Wikilinks**: Use [[Note Name]] syntax
+- **Search**: Alt+F to search all notes  
+- **Auto-save**: Your changes are saved automatically
+- **Mode Toggle**: Use the button above or Alt+M to switch between edit and preview modes
+- **Print to PDF**: Markdown previews can right-click to bring up a contextual menu item, 'PKM: Print Markdown Preview' to print (or save-as) pdf, with all embedded blocks properly rendered.
+- **Export to Word**: Markdown notes can be exported to Word, using the contextual menu item 'PKM: Export to Word'.
+- **Backlinks** See what file points to another. 
+  - FIRST TIME USE: build the backlinks index with the PKM: Build/Rebuild Wikilink Index command
+  - Open/close the backlinks panel to refresh the view
+
+Start building your knowledge graph!
+
+## Quick Start Guide
+Check out the [[PKM-Extension-Guide]] for complete documentation and advanced features.
+
+## Getting Started
+1. **Create notes**: Simply type \`[[New Note Name]]\` to create a link
+2. **Follow links**: Click on any wikilink to navigate or create new notes
+3. **Search everything**: Press Alt+F to search across all your notes
+4. **View connections**: Press Alt+B to see what links to the current note
+
+---
+*This file was automatically created by the PKM Extension. Feel free to edit it as your personal starting point!*
+`;
+
+  try {
+    // Check if file already exists
+    const contents = app.serviceManager.contents;
+    const fileName = 'start.md';
+    
+    try {
+      await contents.get(fileName);
+      console.log('start.md already exists');
+      return;
+    } catch (error) {
+      // File doesn't exist, create it
+    }
+    
+    // Create the start.md file
+    await contents.save(fileName, {
+      type: 'file',
+      format: 'text',
+      content: startContent
+    });
+    
+    console.log('start.md created successfully');
+    
+  } catch (error) {
+    console.warn('Could not create start.md:', error);
+  }
+}

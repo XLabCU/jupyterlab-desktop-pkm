@@ -793,6 +793,82 @@ export const blockEmbeddingPlugin: JupyterFrontEndPlugin<void> = {
   ) => {
     console.log('Block embedding plugin activated');
 
+    // Add print styles to the document
+    const printStyles = document.createElement('style');
+    printStyles.textContent = `
+      /* Print-specific styles */
+      @media print {
+        /* Ensure embedded blocks don't break across pages */
+        .pkm-embedded-block,
+        hr + p + hr {
+          page-break-inside: avoid;
+          border: 1px solid #000 !important;
+          margin: 0.5cm 0;
+          padding: 0.3cm;
+        }
+        
+        /* Style embedded block headers for print */
+        .pkm-embedded-block-header {
+          background-color: #f5f5f5 !important;
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        
+        /* Hide JupyterLab UI elements */
+        .jp-Toolbar,
+        .jp-SideBar,
+        .jp-MenuBar,
+        .jp-StatusBar {
+          display: none !important;
+        }
+        
+        /* Optimize spacing for print */
+        body {
+          margin: 0;
+          padding: 1cm;
+          font-size: 12pt;
+          line-height: 1.4;
+        }
+        
+        /* Code blocks styling for print */
+        pre, code {
+          font-size: 10pt;
+          border: 1px solid #ccc;
+          background-color: #f9f9f9 !important;
+          -webkit-print-color-adjust: exact;
+        }
+        
+        /* Ensure good contrast for print */
+        * {
+          color: #000 !important;
+        }
+        
+        /* Headers styling */
+        h1, h2, h3, h4, h5, h6 {
+          page-break-after: avoid;
+          margin-top: 0.8cm;
+          margin-bottom: 0.4cm;
+        }
+        
+        /* Prevent orphaned content */
+        p, blockquote {
+          orphans: 3;
+          widows: 3;
+        }
+      }
+      
+      /* Screen styles for embedded blocks */
+      @media screen {
+        .pkm-embedded-block {
+          border: 1px solid var(--jp-border-color2);
+          border-radius: 4px;
+          margin: 1rem 0;
+          background: var(--jp-layout-color0);
+        }
+      }
+    `;
+    document.head.appendChild(printStyles);
+
     // Override the default markdown renderer to process block embeds
     const defaultFactory = rendermime.getFactory('text/markdown');
     if (defaultFactory) {
@@ -870,6 +946,166 @@ export const blockEmbeddingPlugin: JupyterFrontEndPlugin<void> = {
         }
       }, 0);
     }
+
+    // Add command to print markdown with embedded blocks
+    app.commands.addCommand('pkm:print-markdown-with-embeds', {
+      label: 'PKM: Print Markdown Preview',
+      caption: 'Print the current markdown document with all embedded blocks rendered',
+      isEnabled: () => {
+        return markdownTracker.currentWidget !== null;
+      },
+      execute: async () => {
+        const currentWidget = markdownTracker.currentWidget;
+        if (!currentWidget) {
+          console.warn('No markdown document is currently active');
+          return;
+        }
+
+        try {
+          // Get the rendered content from the markdown viewer
+          const renderedContent = currentWidget.content.node;
+          const documentTitle = currentWidget.title.label || 'Markdown Document';
+          
+          // Create a new window for printing
+          const printWindow = window.open('', '_blank', 'width=800,height=600');
+          if (!printWindow) {
+            alert('Pop-up blocked. Please allow pop-ups and try again.');
+            return;
+          }
+
+          // Get the current page's stylesheets to maintain formatting
+          const stylesheets = Array.from(document.styleSheets)
+            .map(sheet => {
+              try {
+                if (sheet.href) {
+                  return `<link rel="stylesheet" href="${sheet.href}">`;
+                } else if (sheet.ownerNode) {
+                  return `<style>${Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n')}</style>`;
+                }
+                return '';
+              } catch (e) {
+                // Cross-origin stylesheets might not be accessible
+                return sheet.href ? `<link rel="stylesheet" href="${sheet.href}">` : '';
+              }
+            })
+            .join('\n');
+
+          // Write the print document
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Print: ${documentTitle}</title>
+              ${stylesheets}
+              <style>
+                /* Additional print-specific styles */
+                @media print {
+                  @page {
+                    margin: 2cm;
+                    size: A4;
+                  }
+                  
+                  body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    line-height: 1.6;
+                    color: #000;
+                    background: #fff;
+                  }
+                  
+                  /* Embedded block styling */
+                  hr + p + hr,
+                  .pkm-embedded-block {
+                    page-break-inside: avoid;
+                    border: 2px solid #333 !important;
+                    margin: 1cm 0;
+                    padding: 0.5cm;
+                    background: #f9f9f9 !important;
+                    -webkit-print-color-adjust: exact;
+                  }
+                  
+                  /* Code styling */
+                  pre {
+                    background: #f5f5f5 !important;
+                    border: 1px solid #ccc !important;
+                    padding: 0.5cm;
+                    font-size: 9pt;
+                    overflow-wrap: break-word;
+                    white-space: pre-wrap;
+                  }
+                  
+                  code {
+                    background: #f0f0f0 !important;
+                    padding: 0.1cm 0.2cm;
+                    border-radius: 2px;
+                    font-size: 10pt;
+                  }
+                  
+                  /* Typography */
+                  h1 { font-size: 20pt; margin-top: 1cm; }
+                  h2 { font-size: 16pt; margin-top: 0.8cm; }
+                  h3 { font-size: 14pt; margin-top: 0.6cm; }
+                  h4, h5, h6 { font-size: 12pt; margin-top: 0.4cm; }
+                  
+                  p { margin: 0.3cm 0; }
+                  
+                  /* Table styling */
+                  table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin: 0.5cm 0;
+                  }
+                  
+                  th, td {
+                    border: 1px solid #333;
+                    padding: 0.2cm;
+                    text-align: left;
+                  }
+                  
+                  th {
+                    background: #e0e0e0 !important;
+                    font-weight: bold;
+                  }
+                }
+                
+                /* Hide elements that shouldn't be printed */
+                .jp-Toolbar,
+                .jp-SideBar,
+                .jp-MenuBar,
+                .jp-StatusBar,
+                .jp-Activity,
+                .jp-MainAreaWidget-toolbar {
+                  display: none !important;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="print-content">
+                ${renderedContent.innerHTML}
+              </div>
+              <script>
+                // Auto-print when loaded and close after printing
+                window.onload = function() {
+                  setTimeout(function() {
+                    window.print();
+                    window.onafterprint = function() {
+                      window.close();
+                    };
+                  }, 1000);
+                };
+              </script>
+            </body>
+            </html>
+          `);
+
+          printWindow.document.close();
+
+        } catch (error) {
+          console.error('Error printing markdown document:', error);
+          alert('Error occurred while preparing document for printing. Check the console for details.');
+        }
+      }
+    });
 
     // Add command to show notebook cell overview
     app.commands.addCommand('pkm:show-notebook-cell-overview', {
@@ -958,14 +1194,214 @@ export const blockEmbeddingPlugin: JupyterFrontEndPlugin<void> = {
       }
     });
     
-    // Add to command palette
+    // Option 1: Enhanced HTML with Word-specific formatting
+// Add this as a new command alongside your existing print command
+
+app.commands.addCommand('pkm:export-to-word', {
+  label: 'PKM: Export to Word (.docx)',
+  caption: 'Export the current markdown document with embedded blocks to Word format',
+  isEnabled: () => {
+    return markdownTracker.currentWidget !== null;
+  },
+  execute: async () => {
+    const currentWidget = markdownTracker.currentWidget;
+    if (!currentWidget) {
+      console.warn('No markdown document is currently active');
+      return;
+    }
+
+    try {
+      // Get the rendered content
+      const renderedContent = currentWidget.content.node;
+      const documentTitle = currentWidget.title.label || 'Markdown Document';
+      
+      // Generate Word-compatible HTML
+      const wordHtml = generateWordCompatibleHtml(renderedContent, documentTitle);
+      
+      // Create and download the file
+      const blob = new Blob([wordHtml], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${documentTitle.replace(/[^a-z0-9]/gi, '_')}.doc`; // .doc extension for better Word compatibility
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error exporting to Word:', error);
+      alert('Error occurred while exporting to Word format. Check the console for details.');
+    }
+  }
+});
+
+// Helper function to generate Word-compatible HTML
+function generateWordCompatibleHtml(contentNode: HTMLElement, title: string): string {
+  // Clone the content to avoid modifying the original
+  const clonedContent = contentNode.cloneNode(true) as HTMLElement;
+  
+  // Clean up JupyterLab-specific elements
+  const elementsToRemove = clonedContent.querySelectorAll(
+    '.jp-Toolbar, .jp-SideBar, .jp-MenuBar, .jp-StatusBar, .jp-Activity'
+  );
+  elementsToRemove.forEach(el => el.remove());
+  
+  // Convert embedded blocks to Word-friendly format
+  const embeddedBlocks = clonedContent.querySelectorAll('hr + p + hr');
+  embeddedBlocks.forEach(block => {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      border: 2px solid #333;
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f9f9f9;
+      page-break-inside: avoid;
+    `;
+    
+    // Move content into the container
+    const parent = block.parentNode;
+    if (parent) {
+      parent.insertBefore(container, block);
+      container.appendChild(block);
+    }
+  });
+  
+  return `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:w="urn:schemas-microsoft-com:office:word"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+      <!--[if gte mso 9]>
+      <xml>
+        <w:WordDocument>
+          <w:View>Print</w:View>
+          <w:Zoom>90</w:Zoom>
+          <w:DoNotPromptForConvert/>
+          <w:DoNotShowInsertionsAndDeletions/>
+        </w:WordDocument>
+      </xml>
+      <![endif]-->
+      <style>
+        /* Word-compatible styles */
+        body {
+          font-family: 'Times New Roman', serif;
+          font-size: 12pt;
+          line-height: 1.5;
+          margin: 1in;
+        }
+        
+        h1 { font-size: 18pt; font-weight: bold; margin-top: 24pt; margin-bottom: 12pt; }
+        h2 { font-size: 16pt; font-weight: bold; margin-top: 18pt; margin-bottom: 6pt; }
+        h3 { font-size: 14pt; font-weight: bold; margin-top: 12pt; margin-bottom: 6pt; }
+        h4, h5, h6 { font-size: 12pt; font-weight: bold; margin-top: 12pt; margin-bottom: 3pt; }
+        
+        p { margin-top: 6pt; margin-bottom: 6pt; }
+        
+        /* Code blocks */
+        pre {
+          font-family: 'Courier New', monospace;
+          font-size: 10pt;
+          background-color: #f5f5f5;
+          border: 1px solid #ccc;
+          padding: 12pt;
+          margin: 12pt 0;
+          white-space: pre-wrap;
+        }
+        
+        code {
+          font-family: 'Courier New', monospace;
+          font-size: 10pt;
+          background-color: #f0f0f0;
+          padding: 2pt 4pt;
+        }
+        
+        /* Embedded blocks */
+        .embedded-block {
+          border: 2px solid #333;
+          margin: 20px 0;
+          padding: 15px;
+          background-color: #f9f9f9;
+          page-break-inside: avoid;
+        }
+        
+        /* Tables */
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 12pt 0;
+        }
+        
+        th, td {
+          border: 1px solid #333;
+          padding: 6pt;
+          text-align: left;
+        }
+        
+        th {
+          background-color: #e0e0e0;
+          font-weight: bold;
+        }
+        
+        /* Lists */
+        ul, ol {
+          margin: 6pt 0;
+          padding-left: 24pt;
+        }
+        
+        li {
+          margin: 3pt 0;
+        }
+        
+        /* Blockquotes */
+        blockquote {
+          margin: 12pt 24pt;
+          padding-left: 12pt;
+          border-left: 3pt solid #ccc;
+          font-style: italic;
+        }
+      </style>
+    </head>
+    <body>
+      ${clonedContent.innerHTML}
+    </body>
+    </html>
+  `;
+}
+
+    // Add commands to command palette
     if (palette) {
+      palette.addItem({
+        command: 'pkm:print-markdown-with-embeds',
+        category: 'PKM'
+      });
+      
       palette.addItem({
         command: 'pkm:show-notebook-cell-overview',
         category: 'PKM'
       });
-    }
 
-    // No custom CSS needed - using markdown formatting instead
+      palette.addItem({
+        command: 'pkm:export-to-word',
+        category: 'PKM'
+      });
+    }
+    // Add context menu item for print command
+    app.contextMenu.addItem({
+      command: 'pkm:print-markdown-with-embeds',
+      selector: '.jp-MarkdownViewer',
+      rank: 500 // Controls position in context menu
+    });
+
+    app.contextMenu.addItem({
+      command: 'pkm:export-to-word',
+      selector: '.jp-MarkdownViewer',
+      rank: 501
+    });
   }
 };
